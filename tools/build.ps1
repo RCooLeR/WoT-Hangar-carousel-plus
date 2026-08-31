@@ -55,6 +55,20 @@ if (-not $pythonText.Contains("'priority'") -or
     -not $pythonText.Contains('def _invalidate_vehicle_data')) {
     throw 'Sorting modes or the vehicle-data cache are missing.'
 }
+if (-not $pythonText.Contains('AUTO_ROWS_DEBOUNCE_SECONDS') -or
+    -not $pythonText.Contains('AUTO_ROWS_REARM_SERIAL') -or
+    -not $pythonText.Contains('def _request_automatic_carousel_rows') -or
+    -not $pythonText.Contains('def _register_filter_provider') -or
+    -not $pythonText.Contains('def _rearm_filter_provider') -or
+    -not $pythonText.Contains('provider is not ACTIVE_FILTER_PROVIDER') -or
+    -not $pythonText.Contains('def _apply_rows_to_providers') -or
+    -not $pythonText.Contains('if rows <= 0 or not _carousel_auto()')) {
+    throw 'Stable automatic-row scheduling or no-op provider updates are missing.'
+}
+& $Python27 (Join-Path $repo 'tests\test_auto_rows.py') $pythonSource
+if ($LASTEXITCODE -ne 0) {
+    throw 'Automatic carousel-row behavioral tests failed.'
+}
 & $Python27 -m py_compile $pythonSource
 if ($LASTEXITCODE -ne 0) {
     throw 'Python 2.7 compilation failed.'

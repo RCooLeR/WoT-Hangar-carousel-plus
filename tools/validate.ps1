@@ -115,11 +115,11 @@ try {
     if (-not $nativeSource.Contains('3===s&&"hcp-native-carousel--3",4===s&&"hcp-native-carousel--4"')) {
         throw 'Native carousel bundle does not expose the three- and four-row height classes.'
     }
-    if (-not $nativeSource.Contains('m<=8?1:m<=16?2:m<=24?3:4') -or
+    if (-not $nativeSource.Contains('!p||m<=0)return;const hcpRows=m<=8?1:m<=16?2:m<=24?3:4') -or
         -not $nativeSource.Contains('hcpCarouselAuto') -or
         -not $nativeSource.Contains('m=f.model.current.amount()') -or
-        -not $nativeSource.Contains('hcpAuto:!0')) {
-        throw 'Native carousel bundle does not contain final-list automatic row selection.'
+        -not $nativeSource.Contains('hcpAuto:!0})},200);return()=>clearTimeout(hcpTimer)')) {
+        throw 'Native carousel bundle does not contain stable final-list automatic row selection.'
     }
     if (-not $nativeSource.Contains('hcpSortJson') -or
         -not $nativeSource.Contains('const hcp=') -or
@@ -156,10 +156,10 @@ try {
              -not $eventSource.Contains('HangarApp_carousel__double_5f5d7e60'))) {
             throw 'Last Stand bundle is not using its expected HangarApp carousel wrapper.'
         }
-        if (-not $eventSource.Contains('hcpAmount<=8?1:hcpAmount<=16?2:hcpAmount<=24?3:4') -or
+        if (-not $eventSource.Contains('!hcpAuto||hcpAmount<=0)return;const hcpRows=hcpAmount<=8?1:hcpAmount<=16?2:hcpAmount<=24?3:4') -or
             -not $eventSource.Contains('hcpCarouselAuto') -or
-            -not $eventSource.Contains('hcpAuto:!0')) {
-            throw "Event hangar bundle does not contain automatic row selection: $eventBundlePath"
+            -not $eventSource.Contains('hcpAuto:!0})},200);return()=>clearTimeout(hcpTimer)')) {
+            throw "Event hangar bundle does not contain stable automatic row selection: $eventBundlePath"
         }
         if (-not $eventSource.Contains('hcpSortJson') -or
             -not $eventSource.Contains('const hcp=')) {

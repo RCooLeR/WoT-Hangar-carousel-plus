@@ -33,8 +33,8 @@ The default game root is declared in `tools/build.ps1`. Override it for another 
 The package is written to:
 
 ```text
-dist\com.rcooler.hangar_carousel_plus_0.8.12.wotmod
-dist\Hangar_Carousel_Plus_0.8.12_complete.zip
+dist\com.rcooler.hangar_carousel_plus_0.8.13.wotmod
+dist\Hangar_Carousel_Plus_0.8.13_complete.zip
 ```
 
 Build and install in one step:
@@ -49,13 +49,14 @@ The installer backs up an existing HCP package before replacement. It preserves 
 
 `tools/build.ps1` performs the following operations:
 
-1. compiles `src/python/mod_hangar_carousel_plus.py` with Python 2.7;
-2. stages the Python, Gameface, configuration, metadata, and localization resources;
-3. extracts and patches checksum-verified carousel and tooltip resources from the local client;
-4. packages the staging tree as a `.wotmod` file;
-5. runs `tools/validate.ps1` against the completed package;
-6. creates and validates a complete ZIP from checksum-pinned files in `dependencies/`;
-7. optionally installs the standalone package into the selected game client.
+1. runs the Python 2.7 automatic-row behavioral tests;
+2. compiles `src/python/mod_hangar_carousel_plus.py` with Python 2.7;
+3. stages the Python, Gameface, configuration, metadata, and localization resources;
+4. extracts and patches checksum-verified carousel and tooltip resources from the local client;
+5. packages the staging tree as a `.wotmod` file;
+6. runs `tools/validate.ps1` against the completed package;
+7. creates and validates a complete ZIP from checksum-pinned files in `dependencies/`;
+8. optionally installs the standalone package into the selected game client.
 
 `tools/patch-native-carousel.ps1` generalizes the standard hangar's hard-coded row-pair logic so the provider can render one through four rows. `tools/patch-native-event-carousels.ps1` applies the same contract to the separate Comp7, Comp7 Light, Frontline, Fun Random, and Last Stand Gameface namespaces. Battle Royale uses a different provider API and is deliberately not patched. `tools/patch-native-tooltip.ps1` adds the HCP statistics renderer and styles to the root vehicle tooltip, which is outside the OpenWG subview injector. Every native patch verifies the source resource hash and the exact number of substitutions.
 
@@ -76,7 +77,7 @@ Sorting direction, last-played timestamps, and carousel row mode are stored in `
 The normal build already invokes the package validator. To validate an existing artifact separately:
 
 ```powershell
-.\tools\validate.ps1 -PackagePath '.\dist\com.rcooler.hangar_carousel_plus_0.8.12.wotmod'
+.\tools\validate.ps1 -PackagePath '.\dist\com.rcooler.hangar_carousel_plus_0.8.13.wotmod'
 ```
 
 After a client update:

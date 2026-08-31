@@ -315,9 +315,11 @@ foreach ($bundle in $bundles) {
             $filterMatch = [regex]::Match($match.Groups['prefix'].Value, 'hcpAuto=(?<filter>[A-Za-z_$][\w$]*)\.model')
             $filter = $filterMatch.Groups['filter'].Value
             return $match.Groups['prefix'].Value + ';return ' + $reactVariable +
-                '.useEffect(()=>{if(hcpAuto){const e=hcpAmount<=8?1:hcpAmount<=16?2:hcpAmount<=24?3:4;' +
-                'e!==' + $pageRows + '&&' + $filter +
-                '.controls.carouselTypeChange({rowCount:e,hcpAuto:!0})}},' +
+                '.useEffect(()=>{if(!hcpAuto||hcpAmount<=0)return;' +
+                'const hcpRows=hcpAmount<=8?1:hcpAmount<=16?2:hcpAmount<=24?3:4,' +
+                'hcpTimer=setTimeout(()=>{hcpRows!==' + $pageRows + '&&' + $filter +
+                '.controls.carouselTypeChange({rowCount:hcpRows,hcpAuto:!0})},200);' +
+                'return()=>clearTimeout(hcpTimer)},' +
                 '[hcpAuto,hcpAmount,' + $pageRows + ',' + $filter + '.controls]),'
         } `
         "$($bundle.Name) automatic row selection"

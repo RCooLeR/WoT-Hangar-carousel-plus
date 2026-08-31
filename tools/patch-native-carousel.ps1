@@ -99,7 +99,7 @@ $replacements = @(
     ),
     @(
         'XH=i(function(){const e=Ve(),t=Pr(),a=Fr().model.selectedVehicle(),s=t.model.carouselRowCount.get(),r=void 0===a,i=ZH.includes(e.location)&&!r,c=GH.includes(e.location)&&!r,d=e.location===RC,u=!d;return n.useLayoutEffect(()=>{Us(!0)}),o.jsx',
-        'XH=i(function(){const e=Ve(),t=Pr(),f=Fr(),a=f.model.selectedVehicle(),s=t.model.carouselRowCount.get(),m=f.model.current.amount(),p=t.model.hcpCarouselAuto.get(),r=void 0===a,i=ZH.includes(e.location)&&!r,c=GH.includes(e.location)&&!r,d=e.location===RC,u=!d;return n.useLayoutEffect(()=>{Us(!0)}),n.useEffect(()=>{if(p){const e=m<=8?1:m<=16?2:m<=24?3:4;e!==s&&t.controls.carouselTypeChange({rowCount:e,hcpAuto:!0})}},[p,m,s,t.controls]),o.jsx'
+        'XH=i(function(){const e=Ve(),t=Pr(),f=Fr(),a=f.model.selectedVehicle(),s=t.model.carouselRowCount.get(),m=f.model.current.amount(),p=t.model.hcpCarouselAuto.get(),r=void 0===a,i=ZH.includes(e.location)&&!r,c=GH.includes(e.location)&&!r,d=e.location===RC,u=!d;return n.useLayoutEffect(()=>{Us(!0)}),n.useEffect(()=>{if(!p||m<=0)return;const hcpRows=m<=8?1:m<=16?2:m<=24?3:4,hcpTimer=setTimeout(()=>{hcpRows!==s&&t.controls.carouselTypeChange({rowCount:hcpRows,hcpAuto:!0})},200);return()=>clearTimeout(hcpTimer)},[p,m,s,t.controls]),o.jsx'
     )
 )
 

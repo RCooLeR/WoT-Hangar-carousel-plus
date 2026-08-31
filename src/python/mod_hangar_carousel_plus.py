@@ -34,7 +34,7 @@ from skeletons.gui.shared import IItemsCache
 
 
 MOD_ID = 'hangar_carousel_plus'
-MOD_VERSION = '0.8.12'
+MOD_VERSION = '0.8.13'
 PLAYLIST_ID_PREFIX = 'rcooler_hcp_'
 CONFIG_PATH = os.path.join('mods', 'configs', 'RCooLeR', 'hangar_carousel_plus.json')
 RUNTIME_PATH = os.path.join('mods', 'configs', 'RCooLeR', 'hangar_carousel_plus.runtime.json')
@@ -112,6 +112,7 @@ SERVICES = _Services()
 # would therefore extend their lifetime every time the hangar view is rebuilt.
 MODELS = weakref.WeakSet()
 FILTER_PROVIDERS = []
+ACTIVE_FILTER_PROVIDER = None
 STATISTICS_PRESENTERS = []
 LAST_DATA_SUMMARY = None
 LEGACY_PLAYLISTS_REMOVED = False
@@ -122,6 +123,11 @@ STATE_JSON_CACHE = None
 SORT_JSON_CACHE = None
 MODEL_REFRESH_PENDING = False
 BATTLE_PASS_EVENTS_REGISTERED = False
+AUTO_ROWS_REQUEST_SERIAL = 0
+AUTO_ROWS_PENDING = None
+AUTO_ROWS_PENDING_PROVIDER = None
+AUTO_ROWS_DEBOUNCE_SECONDS = 0.4
+AUTO_ROWS_REARM_SERIAL = 0
 
 
 def _is_hcp_playlist_id(value):
@@ -261,46 +267,205 @@ def _carousel_auto():
     return RUNTIME_STATE.get('carouselRowsMode', 'manual') == 'auto'
 
 
+def _set_filter_provider_auto_property(provider, enabled):
+    try:
+        with provider.viewModel.transaction() as model:
+            model.setHcpCarouselAuto(bool(enabled))
+        return True
+    except Exception:
+        LOGGER.exception('Unable to update automatic carousel mode')
+        return False
+
+
 def _sync_carousel_auto_property(enabled):
     for provider in list(FILTER_PROVIDERS):
+        _set_filter_provider_auto_property(provider, enabled)
+
+
+def _cancel_pending_automatic_rows():
+    global AUTO_ROWS_REQUEST_SERIAL, AUTO_ROWS_PENDING, AUTO_ROWS_PENDING_PROVIDER
+    AUTO_ROWS_REQUEST_SERIAL += 1
+    AUTO_ROWS_PENDING = None
+    AUTO_ROWS_PENDING_PROVIDER = None
+
+
+def _cancel_filter_provider_rearm():
+    global AUTO_ROWS_REARM_SERIAL
+    AUTO_ROWS_REARM_SERIAL += 1
+
+
+def _complete_filter_provider_rearm(provider, serial):
+    if serial != AUTO_ROWS_REARM_SERIAL:
+        return False
+    if (not _carousel_auto() or provider is not ACTIVE_FILTER_PROVIDER or
+            provider not in FILTER_PROVIDERS):
+        return False
+    return _set_filter_provider_auto_property(provider, True)
+
+
+def _rearm_filter_provider(provider):
+    if (not _carousel_auto() or provider is not ACTIVE_FILTER_PROVIDER or
+            provider not in FILTER_PROVIDERS):
+        return False
+    _cancel_filter_provider_rearm()
+    serial = AUTO_ROWS_REARM_SERIAL
+    if not _set_filter_provider_auto_property(provider, False):
+        return False
+    BigWorld.callback(
+        0.0,
+        lambda: _complete_filter_provider_rearm(provider, serial))
+    return True
+
+
+def _register_filter_provider(provider):
+    global ACTIVE_FILTER_PROVIDER
+    if provider in FILTER_PROVIDERS:
+        FILTER_PROVIDERS.remove(provider)
+    FILTER_PROVIDERS.append(provider)
+    if ACTIVE_FILTER_PROVIDER is not provider:
+        _cancel_pending_automatic_rows()
+        _cancel_filter_provider_rearm()
+    ACTIVE_FILTER_PROVIDER = provider
+
+
+def _unregister_filter_provider(provider):
+    global ACTIVE_FILTER_PROVIDER
+    was_active = ACTIVE_FILTER_PROVIDER is provider
+    if was_active:
+        _cancel_pending_automatic_rows()
+        _cancel_filter_provider_rearm()
+    elif AUTO_ROWS_PENDING_PROVIDER is provider:
+        _cancel_pending_automatic_rows()
+    if provider in FILTER_PROVIDERS:
+        FILTER_PROVIDERS.remove(provider)
+    if was_active:
+        ACTIVE_FILTER_PROVIDER = FILTER_PROVIDERS[-1] if FILTER_PROVIDERS else None
+        rows = _carousel_rows()
+        if ACTIVE_FILTER_PROVIDER is not None and rows:
+            _apply_rows_to_providers(rows, (ACTIVE_FILTER_PROVIDER,))
+        if ACTIVE_FILTER_PROVIDER is not None:
+            _rearm_filter_provider(ACTIVE_FILTER_PROVIDER)
+    return ACTIVE_FILTER_PROVIDER
+
+
+def _apply_rows_to_providers(rows, providers=None):
+    updated = 0
+    candidates = list(FILTER_PROVIDERS) if providers is None else list(providers)
+    for provider in candidates:
+        if provider not in FILTER_PROVIDERS:
+            continue
         try:
-            with provider.viewModel.transaction() as model:
-                model.setHcpCarouselAuto(bool(enabled))
+            model_rows = int(provider.viewModel.getCarouselRowCount())
+            provider_rows = int(getattr(
+                provider, '_VehicleFiltersDataProvider__rowCount', model_rows))
+            if model_rows == rows and provider_rows == rows:
+                continue
+            provider._VehicleFiltersDataProvider__rowCount = rows
+            provider._VehicleFiltersDataProvider__updateCarousel()
+            updated += 1
         except Exception:
-            LOGGER.exception('Unable to update automatic carousel mode')
+            LOGGER.exception('Unable to apply %d carousel rows', rows)
+    return updated
 
 
-def _set_carousel_rows(rows, automatic=False):
+def _set_carousel_rows(rows, automatic=False, provider=None):
     rows = int(rows)
-    _invalidate_render_cache(include_sort=False)
     if rows == 0:
+        if _carousel_auto():
+            return False
+        _cancel_pending_automatic_rows()
         RUNTIME_STATE['carouselRowsMode'] = 'auto'
+        _invalidate_render_cache(include_sort=False)
         _save_runtime()
         _sync_carousel_auto_property(True)
         for model in list(MODELS):
             model.refresh()
         LOGGER.info('Automatic carousel row mode enabled')
-        return
+        return True
 
     rows = max(1, min(4, int(rows)))
     if automatic:
-        if not _carousel_auto():
-            return
+        if (not _carousel_auto() or provider is None or
+                provider is not ACTIVE_FILTER_PROVIDER or
+                provider not in FILTER_PROVIDERS):
+            return False
+        next_mode = 'auto'
     else:
-        RUNTIME_STATE['carouselRowsMode'] = 'manual'
-    RUNTIME_STATE['carouselRows'] = rows
-    _save_runtime()
-    _sync_carousel_auto_property(_carousel_auto())
-    for provider in list(FILTER_PROVIDERS):
-        try:
-            provider._VehicleFiltersDataProvider__rowCount = rows
-            provider._VehicleFiltersDataProvider__updateCarousel()
-        except Exception:
-            LOGGER.exception('Unable to apply %d carousel rows', rows)
-    for model in list(MODELS):
-        model.refresh()
-    LOGGER.info('Carousel row count changed to %d%s',
-                rows, ' automatically' if automatic else '')
+        if (provider is not None and
+                (provider is not ACTIVE_FILTER_PROVIDER or
+                 provider not in FILTER_PROVIDERS)):
+            return False
+        _cancel_pending_automatic_rows()
+        next_mode = 'manual'
+
+    previous_rows = _carousel_rows()
+    previous_mode = 'auto' if _carousel_auto() else 'manual'
+    state_changed = previous_rows != rows or previous_mode != next_mode
+    if state_changed:
+        RUNTIME_STATE['carouselRowsMode'] = next_mode
+        RUNTIME_STATE['carouselRows'] = rows
+        _invalidate_render_cache(include_sort=False)
+        _save_runtime()
+        if previous_mode != next_mode:
+            _sync_carousel_auto_property(next_mode == 'auto')
+
+    target_providers = (provider,) if automatic else None
+    updated_providers = _apply_rows_to_providers(rows, target_providers)
+    if not state_changed and not updated_providers:
+        return False
+
+    if state_changed:
+        for model in list(MODELS):
+            model.refresh()
+        LOGGER.info('Carousel row count changed to %d%s',
+                    rows, ' automatically' if automatic else '')
+    return True
+
+
+def _apply_pending_automatic_rows(serial):
+    global AUTO_ROWS_PENDING, AUTO_ROWS_PENDING_PROVIDER
+    if serial != AUTO_ROWS_REQUEST_SERIAL:
+        return
+    rows = AUTO_ROWS_PENDING
+    provider = AUTO_ROWS_PENDING_PROVIDER
+    AUTO_ROWS_PENDING = None
+    AUTO_ROWS_PENDING_PROVIDER = None
+    if (provider is None or provider is not ACTIVE_FILTER_PROVIDER or
+            provider not in FILTER_PROVIDERS):
+        return
+    if rows is None or not _carousel_auto() or rows == _carousel_rows():
+        return
+    _set_carousel_rows(rows, automatic=True, provider=provider)
+
+
+def _request_automatic_carousel_rows(rows, provider=None):
+    global AUTO_ROWS_REQUEST_SERIAL, AUTO_ROWS_PENDING, AUTO_ROWS_PENDING_PROVIDER
+    try:
+        rows = int(rows)
+    except (TypeError, ValueError):
+        return False
+    if rows <= 0 or not _carousel_auto():
+        return False
+    if (provider is None or provider is not ACTIVE_FILTER_PROVIDER or
+            provider not in FILTER_PROVIDERS):
+        return False
+    rows = max(1, min(4, rows))
+    AUTO_ROWS_REQUEST_SERIAL += 1
+    serial = AUTO_ROWS_REQUEST_SERIAL
+    AUTO_ROWS_PENDING = None
+    AUTO_ROWS_PENDING_PROVIDER = None
+
+    if rows == _carousel_rows():
+        if provider is not None:
+            _apply_rows_to_providers(rows, (provider,))
+        return False
+
+    AUTO_ROWS_PENDING = rows
+    AUTO_ROWS_PENDING_PROVIDER = provider
+    BigWorld.callback(
+        AUTO_ROWS_DEBOUNCE_SECONDS,
+        lambda: _apply_pending_automatic_rows(serial))
+    return True
 
 
 def _inventory_vehicles():
@@ -955,45 +1120,55 @@ def _patch_vehicle_filters_provider():
 
     def patched_on_loading(self, *args, **kwargs):
         result = original_on_loading(self, *args, **kwargs)
-        if self not in FILTER_PROVIDERS:
-            FILTER_PROVIDERS.append(self)
+        _register_filter_provider(self)
         with self.viewModel.transaction() as model:
             model.setHcpCarouselAuto(_carousel_auto())
             model.setHcpSortJson(_build_sort_json())
         rows = _carousel_rows()
         if not rows:
-            rows = int(self.viewModel.getCarouselRowCount())
-            RUNTIME_STATE['carouselRows'] = rows
-            _save_runtime()
-            _invalidate_render_cache(include_sort=False)
-        if rows != int(self.viewModel.getCarouselRowCount()):
-            self._VehicleFiltersDataProvider__rowCount = rows
-            self._VehicleFiltersDataProvider__updateCarousel()
+            rows = max(1, min(4, int(self.viewModel.getCarouselRowCount())))
+            if _carousel_rows() != rows:
+                RUNTIME_STATE['carouselRows'] = rows
+                _save_runtime()
+                _invalidate_render_cache(include_sort=False)
+        _apply_rows_to_providers(rows, (self,))
         return result
 
     def patched_finalize(self):
         try:
-            if self in FILTER_PROVIDERS:
-                FILTER_PROVIDERS.remove(self)
+            _unregister_filter_provider(self)
         finally:
             original_finalize(self)
 
     def patched_type_changed(self, args):
         rows = max(1, min(4, int(args.get('rowCount', 2))))
+        if self is not ACTIVE_FILTER_PROVIDER or self not in FILTER_PROVIDERS:
+            return None
         if bool(args.get('hcpAuto', False)):
-            _set_carousel_rows(rows, automatic=True)
+            _request_automatic_carousel_rows(rows, self)
             return None
         if rows <= 2:
-            result = original_type_changed(self, {'rowCount': rows})
-            RUNTIME_STATE['carouselRows'] = rows
-            RUNTIME_STATE['carouselRowsMode'] = 'manual'
-            _save_runtime()
-            _invalidate_render_cache(include_sort=False)
-            _sync_carousel_auto_property(False)
-            for model in list(MODELS):
-                model.refresh()
+            _cancel_pending_automatic_rows()
+            previous_rows = _carousel_rows()
+            was_automatic = _carousel_auto()
+            model_rows = int(self.viewModel.getCarouselRowCount())
+            provider_rows = int(getattr(
+                self, '_VehicleFiltersDataProvider__rowCount', model_rows))
+            result = None
+            if model_rows != rows or provider_rows != rows:
+                result = original_type_changed(self, {'rowCount': rows})
+            state_changed = previous_rows != rows or was_automatic
+            if state_changed:
+                RUNTIME_STATE['carouselRows'] = rows
+                RUNTIME_STATE['carouselRowsMode'] = 'manual'
+                _save_runtime()
+                _invalidate_render_cache(include_sort=False)
+                if was_automatic:
+                    _sync_carousel_auto_property(False)
+                for model in list(MODELS):
+                    model.refresh()
             return result
-        _set_carousel_rows(rows)
+        _set_carousel_rows(rows, provider=self)
         return None
 
     VehicleFiltersDataProvider._onLoading = patched_on_loading

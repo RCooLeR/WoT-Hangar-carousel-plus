@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.8.13 - 2026-08-21
+
+- Stabilize automatic carousel rows while the standard and event hangars rebuild their vehicle models.
+- Ignore transient empty vehicle counts and debounce row changes across Comp7, Comp7 Light, Frontline, Fun Random, and Last Stand.
+- Let only the most recently loaded native carousel provider schedule and receive automatic row changes during hangar transitions.
+- Re-arm automatic calculation when a previously hidden provider is promoted after the active event hangar closes.
+- Skip unchanged runtime writes, model refreshes, and native carousel rebuilds.
+
 ## 0.8.12 - 2026-08-20
 
 - Add compatibility with the Wargaming EU 2.3.1.3 client bundles.
