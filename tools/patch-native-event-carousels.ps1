@@ -3,19 +3,21 @@ param(
     [Parameter(Mandatory = $true)]
     [string]$GameRoot,
     [Parameter(Mandatory = $true)]
-    [string]$OutputRoot
+    [string]$OutputRoot,
+    [string]$StandardOutputPath
 )
 
 $ErrorActionPreference = 'Stop'
 $GameRoot = [IO.Path]::GetFullPath($GameRoot)
 $OutputRoot = [IO.Path]::GetFullPath($OutputRoot)
+. (Join-Path $PSScriptRoot 'client-profile.ps1')
+$profile = Get-HcpClientProfile -GameRoot $GameRoot
 
 $bundles = @(
     @{
         Name = 'Comp7 Light'
         Package = 'comp7_light.pkg'
         Entry = 'comp7_light/gui/gameface/_dist/production/mono/lobby/views/hangar/hangar.html/bundle.js'
-        Hash = 'BA6EF18452D54D9099615B656253BA4356C5749E57CDDA84AFFBA7E1C4F86A66'
         RootKind = 'standard'
         NativeChangerCount = 1
     },
@@ -23,7 +25,6 @@ $bundles = @(
         Name = 'Comp7'
         Package = 'comp7.pkg'
         Entry = 'comp7/gui/gameface/_dist/production/mono/lobby/views/hangar/hangar.html/bundle.js'
-        Hash = '14A26559004806E640BB0F30627128FE4EE7EAAA8CEF9AF329B97EBAA4AB5987'
         RootKind = 'standard'
         NativeChangerCount = 1
     },
@@ -31,7 +32,6 @@ $bundles = @(
         Name = 'Frontline'
         Package = 'frontline.pkg'
         Entry = 'frontline/gui/gameface/_dist/production/mono/lobby/views/hangar/hangar.html/bundle.js'
-        Hash = '0D0FC40F5530068292201A86F313017413C23EA82EA7318AA88ABCAF463A8895'
         RootKind = 'standard'
         NativeChangerCount = 1
     },
@@ -39,7 +39,6 @@ $bundles = @(
         Name = 'Fun Random'
         Package = 'fun_random.pkg'
         Entry = 'fun_random/gui/gameface/_dist/production/mono/lobby/views/hangar/hangar.html/bundle.js'
-        Hash = '5B9C162BAA4EAC3E836F37613ABF84AEC6C408236C528BD535B3CEC6D42710E6'
         RootKind = 'standard'
         NativeChangerCount = 1
     },
@@ -47,11 +46,27 @@ $bundles = @(
         Name = 'Last Stand'
         Package = 'last_stand.pkg'
         Entry = 'last_stand/gui/gameface/_dist/production/mono/lobby/views/hangar/hangar.html/bundle.js'
-        Hash = 'D6BAAB13DA17167515F5829EA2536F5E1D619B63557F718246A49BF1A366F165'
         RootKind = 'lastStand'
         NativeChangerCount = 2
     }
 )
+
+if ($StandardOutputPath) {
+    $StandardOutputPath = [IO.Path]::GetFullPath($StandardOutputPath)
+    $bundles = @(@{
+        Name = 'standard'
+        Package = 'gui-part3.pkg'
+        Entry = 'gui/gameface/_dist/production/mono/hangar/views/main/main.html/bundle.js'
+        RootKind = 'standard'
+        NativeChangerCount = 1
+        ProfileKey = 'main'
+    })
+}
+foreach ($bundle in $bundles) {
+    $key = if ($bundle.ProfileKey) { $bundle.ProfileKey } else { [IO.Path]::GetFileNameWithoutExtension($bundle.Package) }
+    $bundle.Hash = $profile.Hashes.PSObject.Properties[$key].Value
+    if (-not $bundle.Hash) { throw "Missing source hash for $key in $($profile.Version)." }
+}
 
 function Replace-RegexExact {
     param(
@@ -123,7 +138,7 @@ foreach ($bundle in $bundles) {
         $sha.Dispose()
     }
     if ($sourceHash -ne $bundle.Hash) {
-        throw "Unsupported $($bundle.Name) hangar bundle $sourceHash; expected WoT 2.3.1.3 bundle $($bundle.Hash)."
+        throw "Unsupported $($bundle.Name) hangar bundle $sourceHash; expected WoT $($profile.Version) bundle $($bundle.Hash)."
     }
 
     $source = [Text.Encoding]::UTF8.GetString($sourceBytes)
@@ -243,8 +258,8 @@ foreach ($bundle in $bundles) {
     $reactVariable = $script:reactVariable
 
     $source = Replace-RegexExact $source `
-        'function\(e,t,a,s,n\)\{const r=2===s;function' `
-        { param($match) return $match.Value.Replace('r=2===s', 'r=1<s') } `
+        'function\(e,t,a,s,n\)\{const (?<multi>[A-Za-z_$][\w$]*)=2===s;function' `
+        { param($match) return $match.Value.Replace('=2===s', '=1<s') } `
         "$($bundle.Name) multi-row keyboard navigation"
 
     $source = Replace-RegexExact $source `
@@ -337,7 +352,7 @@ foreach ($bundle in $bundles) {
         } `
         "$($bundle.Name) extended carousel height"
 
-    $outputPath = Join-Path $OutputRoot ($bundle.Entry.Replace('/', '\'))
+    $outputPath = if ($StandardOutputPath) { $StandardOutputPath } else { Join-Path $OutputRoot ($bundle.Entry.Replace('/', '\')) }
     $directory = Split-Path -Parent $outputPath
     New-Item -ItemType Directory -Force -Path $directory | Out-Null
     [IO.File]::WriteAllText($outputPath, $source, (New-Object Text.UTF8Encoding($false)))

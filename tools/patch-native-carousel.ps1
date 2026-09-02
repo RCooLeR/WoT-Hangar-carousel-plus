@@ -9,9 +9,16 @@ param(
 $ErrorActionPreference = 'Stop'
 $GameRoot = [IO.Path]::GetFullPath($GameRoot)
 $OutputPath = [IO.Path]::GetFullPath($OutputPath)
+. (Join-Path $PSScriptRoot 'client-profile.ps1')
+$profile = Get-HcpClientProfile -GameRoot $GameRoot
+if ($profile.Version -eq '2.4.0.0') {
+    & (Join-Path $PSScriptRoot 'patch-native-event-carousels.ps1') `
+        -GameRoot $GameRoot -OutputRoot (Split-Path -Parent $OutputPath) -StandardOutputPath $OutputPath
+    return
+}
 $packagePath = Join-Path $GameRoot 'res\packages\gui-part3.pkg'
 $entryPath = 'gui/gameface/_dist/production/mono/hangar/views/main/main.html/bundle.js'
-$expectedHash = 'A0D8375A7733B09BD71C7A291167AC7713780DF1438371EF9777E902E3971551'
+$expectedHash = $profile.Hashes.main
 
 Add-Type -AssemblyName System.IO.Compression
 Add-Type -AssemblyName System.IO.Compression.FileSystem
@@ -44,7 +51,7 @@ finally {
     $sha.Dispose()
 }
 if ($sourceHash -ne $expectedHash) {
-    throw "Unsupported native hangar bundle $sourceHash; expected WoT 2.3.1.3 bundle $expectedHash"
+    throw "Unsupported native hangar bundle $sourceHash; expected WoT $($profile.Version) bundle $expectedHash"
 }
 
 $source = [Text.Encoding]::UTF8.GetString($sourceBytes)

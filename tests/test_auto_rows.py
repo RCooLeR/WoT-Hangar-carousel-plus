@@ -10,6 +10,7 @@ import unittest
 FUNCTIONS = set((
     '_carousel_rows',
     '_carousel_auto',
+    '_coerce_carousel_row_count',
     '_set_filter_provider_auto_property',
     '_cancel_pending_automatic_rows',
     '_cancel_filter_provider_rearm',
@@ -297,6 +298,30 @@ class AutomaticRowsTest(unittest.TestCase):
         self.assertEqual(0, active.updates)
         self.assertEqual(0, stale.updates)
         self.assertEqual(0, self.model.refreshes)
+
+    def test_native_none_provider_row_count_falls_back_to_model(self):
+        provider = _Provider('active', rows=1)
+        provider._VehicleFiltersDataProvider__rowCount = None
+        self.register(provider)
+
+        updated = self.namespace['_apply_rows_to_providers'](3, (provider,))
+
+        self.assertEqual(1, updated)
+        self.assertEqual(3, provider._VehicleFiltersDataProvider__rowCount)
+        self.assertEqual(3, provider.viewModel.rows)
+        self.assertEqual(1, provider.updates)
+
+    def test_uninitialised_model_and_provider_counts_force_update(self):
+        provider = _Provider('active', rows=None)
+        provider._VehicleFiltersDataProvider__rowCount = None
+        self.register(provider)
+
+        updated = self.namespace['_apply_rows_to_providers'](2, (provider,))
+
+        self.assertEqual(1, updated)
+        self.assertEqual(2, provider._VehicleFiltersDataProvider__rowCount)
+        self.assertEqual(2, provider.viewModel.rows)
+        self.assertEqual(1, provider.updates)
 
 
 if __name__ == '__main__':

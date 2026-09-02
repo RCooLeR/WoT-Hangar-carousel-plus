@@ -41,6 +41,6 @@ The garage API does not provide a historical last-played value per vehicle. HCP 
 ## Compatibility boundaries
 
 - Python: generated `VehicleFilterModel`, `VehiclesStatisticsPresenter`, vehicle/tankman wrappers, and post-progression completion.
-- Gameface: OpenWG subview injection, `FilterPopover_*`, `data-test-id="vehicleCard-<intCD>"`, and the checksum-locked standard and compatible event hangar bundles for WoT 2.3.1.
+- Gameface: OpenWG subview injection, `FilterPopover_*`, `data-test-id="vehicleCard-<intCD>"`, and the checksum-locked standard and compatible event hangar bundles for WoT 2.4.0.0.
 
 Every client update requires re-validating all native bundle substitutions before a new package can be built.

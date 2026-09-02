@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 1,
+  "reviewedClients": ["2.3.1.3 #926", "2.4.0.0 #930"],
+  "nodes": {
+    "gui/impl/gen/view_models/views/lobby/hangar/sub_views/vehicle_filter_model.pyc": {
+      "<module>.VehicleFilterModel": "acb4d17304324ca3d07c8fbabdde377b170e80895df2f7e9eb9741297dac13d7"
+    },
+    "gui/impl/gen/view_models/views/lobby/tooltips/carousel_vehicle_tooltip_model.pyc": {
+      "<module>.CarouselVehicleTooltipModel": "131569a97b467306979ca222eb313716e9a17dc0b6b16d75acfd54140fa81a2e"
+    },
+    "gui/impl/lobby/hangar/presenters/vehicle_filters_presenter.pyc": {
+      "<module>.VehicleFiltersDataProvider": "6765691706f7fc96c43d57aba804c1101a46f6f7f4632fffec58e7ae9fc56ec5"
+    },
+    "gui/impl/lobby/hangar/presenters/vehicle_statistics_presenter.pyc": {
+      "<module>.VehiclesStatisticsPresenter.__init__": "34f0d2f9adfa3847035667cd20673a2f9f45b6e2d9e54251750a716d312503a8",
+      "<module>.VehiclesStatisticsPresenter._finalize": "da72e13e6fd9907475a7d91ff618fe48f671c6563f64b14d75d5f79688f5a718",
+      "<module>.VehiclesStatisticsPresenter.__updateVehicles": "1dc8eeb34c032890ca50ca4949888f4f083cf5f9a0f1848f562fcb436beb5b8a",
+      "<module>.VehiclesStatisticsPresenter.__onUpdateVehicles": "7134d02ca3664e24703ea96f0a5c7739ccbfdf4a8f393f53adb2054ea2bfd4a3"
+    },
+    "gui/impl/lobby/hangar/presenters/vehicle_playlists_presenter.pyc": {
+      "<module>.VehiclePlaylistsPresenter._onLoading": "b2640d252354e6dcf38156780969abd5503986b71fb60c558a75fa9f525ee519"
+    },
+    "gui/impl/lobby/tooltips/carousel_vehicle_tooltip.pyc": {
+      "<module>.CarouselVehicleTooltipView._onLoading": "21f42b3f8ade7a99100660520843c4b898c76705d82c51c0ab2f79951ad83bae"
+    },
+    "gui/game_control/battle_pass_controller.pyc": {
+      "<module>.BattlePassController.getVehicleProgression": "5a3e81f26c13ccb2bb4b99554811bc6ce263353023f4fa1ae67af39f82b40f1e"
+    }
+  }
+}

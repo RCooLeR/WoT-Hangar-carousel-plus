@@ -4,14 +4,16 @@
 
 ## Compatibility boundary
 
-Hangar Carousel Plus currently targets the Wargaming EU 2.3.1.x client. Its Python APIs, generated models, DOM hooks, and version-locked native Gameface bundle substitutions are private game interfaces. Rebuild and test the mod after every World of Tanks update.
+Hangar Carousel Plus currently targets the Wargaming EU 2.4.0.0 client. Its Python APIs, generated models, DOM hooks, and version-locked native Gameface bundle substitutions are private game interfaces. Rebuild and test the mod after every World of Tanks update.
 
 The native carousel and tooltip patches are protected by source checksums and exact replacement counts. The build stops when the installed client resources do not match the supported version. Patched client resources are generated locally; no original Wargaming bundle is committed to this repository.
+
+Reviewed source hashes live in `tools/client-profiles.json`. The 2.3.1.3 profile is retained for reproducibility, while 2.4.0.0 is the current stable release profile. `tools/check-client-api.py` also checks bytecode fingerprints for the exact private models and presenter methods HCP patches, without importing or executing client code.
 
 ## Prerequisites
 
 - Windows PowerShell 5.1 or PowerShell 7;
-- a local World of Tanks Wargaming EU 2.3.1.x installation;
+- a local World of Tanks Wargaming EU 2.4.0.0 installation;
 - enough network access for the first build to download the official Python 2.7.18 MSI.
 
 When `-Python27` is not supplied, `tools/bootstrap-python27.ps1` verifies and extracts the official MSI into the local `.tools/` directory. It does not install Python system-wide.
@@ -33,8 +35,8 @@ The default game root is declared in `tools/build.ps1`. Override it for another 
 The package is written to:
 
 ```text
-dist\com.rcooler.hangar_carousel_plus_0.8.13.wotmod
-dist\Hangar_Carousel_Plus_0.8.13_complete.zip
+dist\com.rcooler.hangar_carousel_plus_0.8.14.wotmod
+dist\Hangar_Carousel_Plus_0.8.14_complete.zip
 ```
 
 Build and install in one step:
@@ -43,7 +45,26 @@ Build and install in one step:
 .\tools\build.ps1 -Install -GameRoot 'E:\Games\World of Tanks'
 ```
 
-The installer backs up an existing HCP package before replacement. It preserves the user's live `config.json`; `tools/install.ps1 -ForceConfig` is the explicit opt-in for replacing that configuration with the repository default.
+The installer backs up an existing HCP package before replacement. It preserves the user's live `hangar_carousel_plus.json`; `tools/install.ps1 -ForceConfig` is the explicit opt-in for replacing that configuration with the repository default.
+
+## Pre-release compatibility builds
+
+Build a candidate against a reconstructed or separate client tree:
+
+```powershell
+.\tools\build.ps1 -GameRoot '<staged-client-root>' -PreviewVersion '0.8.15-rc.1'
+```
+
+This writes generated metadata, Python bytecode, native patches, standalone mod, complete dependency ZIP, and checksums into separate paths:
+
+```text
+build\preview\<client-version>\0.8.15-rc.1\
+dist\preview\<client-version>\0.8.15-rc.1\
+```
+
+Tracked `meta.xml`, runtime source version, README download links, and stable artifacts are unchanged. Preview builds reject `-Install`; profiles marked `previewOnly` also reject stable builds. `-OutputDirectory` may redirect artifacts but cannot target the stable `dist` root or `releases` tree for a preview. Do not distribute a candidate built against one client profile as a package for another profile.
+
+On the release day, re-run against the actual updated client: any changed native source or guarded Python contract stops the build. Run the in-game smoke tests before removing `previewOnly` from the reviewed profile and updating stable version metadata.
 
 ## Build pipeline
 
@@ -74,10 +95,18 @@ Sorting direction, last-played timestamps, and carousel row mode are stored in `
 
 ## Validation
 
+The build runs the Python API guard tests and automatic-row coordinator tests. When Node.js is available, it additionally syntax-checks all six patched carousel bundles and the tooltip bundle, executes 864 row-chunking cases, and checks automatic thresholds, sorting direction/ties, keyboard patch markers, and required DOM anchors. Node.js is recommended for release preparation; its absence produces an explicit warning rather than silently implying those tests passed.
+
+The build-profile negative tests can be run separately:
+
+```powershell
+.\tests\test_build_profiles.ps1
+```
+
 The normal build already invokes the package validator. To validate an existing artifact separately:
 
 ```powershell
-.\tools\validate.ps1 -PackagePath '.\dist\com.rcooler.hangar_carousel_plus_0.8.13.wotmod'
+.\tools\validate.ps1 -PackagePath '.\dist\com.rcooler.hangar_carousel_plus_0.8.14.wotmod'
 ```
 
 After a client update:

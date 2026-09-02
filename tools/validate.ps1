@@ -106,24 +106,28 @@ try {
         $nativeReader.Dispose()
         $nativeStream.Dispose()
     }
-    if (-not $nativeSource.Contains('t+=i)e.push(j.slice(t,t+i))')) {
+    if (-not [regex]::IsMatch($nativeSource,
+            't\+=(?<rows>[A-Za-z_$][\w$]*)\)e\.push\((?<source>[A-Za-z_$][\w$]*)\.slice\(t,t\+\k<rows>\)\);const a=e\.at\(-1\);if\(a\)for\(;a\.length<\k<rows>;\)a\.push')) {
         throw 'Native carousel bundle does not contain the generic HCP row chunker.'
     }
-    if ($nativeSource.Contains('totalElements:2===v?N.length:w.length')) {
+    if ($nativeSource.Contains('totalElements:2===')) {
         throw 'Native carousel bundle still contains the two-row-only renderer.'
     }
     if (-not $nativeSource.Contains('3===s&&"hcp-native-carousel--3",4===s&&"hcp-native-carousel--4"')) {
         throw 'Native carousel bundle does not expose the three- and four-row height classes.'
     }
-    if (-not $nativeSource.Contains('!p||m<=0)return;const hcpRows=m<=8?1:m<=16?2:m<=24?3:4') -or
+    $legacyAuto = $nativeSource.Contains('!p||m<=0)return;const hcpRows=m<=8?1:m<=16?2:m<=24?3:4') -and
+        $nativeSource.Contains('m=f.model.current.amount()')
+    $profileAuto = $nativeSource.Contains('!hcpAuto||hcpAmount<=0)return;const hcpRows=hcpAmount<=8?1:hcpAmount<=16?2:hcpAmount<=24?3:4') -and
+        $nativeSource.Contains('hcpAmount=hcpVehicles.model.current.amount()')
+    if ((-not $legacyAuto -and -not $profileAuto) -or
         -not $nativeSource.Contains('hcpCarouselAuto') -or
-        -not $nativeSource.Contains('m=f.model.current.amount()') -or
         -not $nativeSource.Contains('hcpAuto:!0})},200);return()=>clearTimeout(hcpTimer)')) {
         throw 'Native carousel bundle does not contain stable final-list automatic row selection.'
     }
     if (-not $nativeSource.Contains('hcpSortJson') -or
         -not $nativeSource.Contains('const hcp=') -or
-        -not $nativeSource.Contains('hcpCarouselAuto:i.hcpCarouselAuto')) {
+        -not [regex]::IsMatch($nativeSource, 'hcpCarouselAuto:[A-Za-z_$][\w$]*\.hcpCarouselAuto')) {
         throw 'Native carousel bundle does not contain HCP sorting support.'
     }
 

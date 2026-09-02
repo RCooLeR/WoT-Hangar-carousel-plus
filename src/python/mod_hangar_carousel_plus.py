@@ -34,7 +34,7 @@ from skeletons.gui.shared import IItemsCache
 
 
 MOD_ID = 'hangar_carousel_plus'
-MOD_VERSION = '0.8.13'
+MOD_VERSION = '0.8.14'
 PLAYLIST_ID_PREFIX = 'rcooler_hcp_'
 CONFIG_PATH = os.path.join('mods', 'configs', 'RCooLeR', 'hangar_carousel_plus.json')
 RUNTIME_PATH = os.path.join('mods', 'configs', 'RCooLeR', 'hangar_carousel_plus.runtime.json')
@@ -107,7 +107,7 @@ class _Services(object):
 
 
 SERVICES = _Services()
-# ViewModel has no dispose/finalize hook in the supported WoT 2.3.1.x Wulf API, but it is
+# ViewModel has no dispose/finalize hook in the supported WoT 2.4.0 Wulf API, but it is
 # explicitly weak-referenceable.  Keeping these child models in a normal list
 # would therefore extend their lifetime every time the hangar view is rebuilt.
 MODELS = weakref.WeakSet()
@@ -267,6 +267,22 @@ def _carousel_auto():
     return RUNTIME_STATE.get('carouselRowsMode', 'manual') == 'auto'
 
 
+def _coerce_carousel_row_count(value, fallback=0):
+    """Return a supported row count without assuming the provider cached one.
+
+    The native provider deliberately keeps ``__rowCount`` as ``None`` until a
+    row change is requested.  In that state ``__updateCarousel`` falls back to
+    the client setting, so the view-model value is the best cached equivalent.
+    A zero fallback remains useful to distinguish an uninitialised view model
+    from a real 1-4 row value and force the first update.
+    """
+    try:
+        rows = int(value)
+    except (TypeError, ValueError):
+        return fallback
+    return rows if 1 <= rows <= 4 else fallback
+
+
 def _set_filter_provider_auto_property(provider, enabled):
     try:
         with provider.viewModel.transaction() as model:
@@ -355,9 +371,11 @@ def _apply_rows_to_providers(rows, providers=None):
         if provider not in FILTER_PROVIDERS:
             continue
         try:
-            model_rows = int(provider.viewModel.getCarouselRowCount())
-            provider_rows = int(getattr(
-                provider, '_VehicleFiltersDataProvider__rowCount', model_rows))
+            model_rows = _coerce_carousel_row_count(
+                provider.viewModel.getCarouselRowCount())
+            provider_rows = _coerce_carousel_row_count(
+                getattr(provider, '_VehicleFiltersDataProvider__rowCount', None),
+                model_rows)
             if model_rows == rows and provider_rows == rows:
                 continue
             provider._VehicleFiltersDataProvider__rowCount = rows
@@ -1126,7 +1144,8 @@ def _patch_vehicle_filters_provider():
             model.setHcpSortJson(_build_sort_json())
         rows = _carousel_rows()
         if not rows:
-            rows = max(1, min(4, int(self.viewModel.getCarouselRowCount())))
+            rows = _coerce_carousel_row_count(
+                self.viewModel.getCarouselRowCount(), 2)
             if _carousel_rows() != rows:
                 RUNTIME_STATE['carouselRows'] = rows
                 _save_runtime()
@@ -1151,9 +1170,11 @@ def _patch_vehicle_filters_provider():
             _cancel_pending_automatic_rows()
             previous_rows = _carousel_rows()
             was_automatic = _carousel_auto()
-            model_rows = int(self.viewModel.getCarouselRowCount())
-            provider_rows = int(getattr(
-                self, '_VehicleFiltersDataProvider__rowCount', model_rows))
+            model_rows = _coerce_carousel_row_count(
+                self.viewModel.getCarouselRowCount())
+            provider_rows = _coerce_carousel_row_count(
+                getattr(self, '_VehicleFiltersDataProvider__rowCount', None),
+                model_rows)
             result = None
             if model_rows != rows or provider_rows != rows:
                 result = original_type_changed(self, {'rowCount': rows})

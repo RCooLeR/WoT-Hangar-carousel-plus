@@ -4,7 +4,7 @@
 
 Hangar Carousel Plus extends the native World of Tanks 2.x hangar carousel with smart filters, sorting, local statistics, and configurable row layouts.
 
-The mod currently targets the Wargaming EU 2.3.1.x client and provides:
+The mod currently targets the Wargaming EU 2.4.0.0 client and provides:
 
 - filters for incomplete Field Modification, incompletely trained crews, and non-elite vehicles;
 - reward/special, not-ready, no-Ace, fewer-than-three-Marks, and research-now-available filters;
@@ -21,18 +21,18 @@ No account credentials or statistics are sent to an external service.
 
 ## Download and install
 
-[Download the complete Hangar Carousel Plus 0.8.13 bundle](releases/0.8.13/Hangar_Carousel_Plus_0.8.13_complete.zip?raw=1)
+[Download the complete Hangar Carousel Plus 0.8.14 bundle](releases/0.8.14/Hangar_Carousel_Plus_0.8.14_complete.zip?raw=1)
 
 1. Close World of Tanks.
 2. Remove older `com.rcooler.hangar_carousel_plus_*.wotmod` files from `<game>\mods\<current-client-version>\`.
 3. Extract the ZIP directly into the World of Tanks root and allow it to merge the `mods` directory.
 4. Start the game.
 
-The bundle already contains HCP and all required dependencies in the standard `mods\<current-client-version>\` structure. Advanced users can also download the [standalone HCP file](releases/0.8.13/com.rcooler.hangar_carousel_plus_0.8.13.wotmod?raw=1). Checksums are stored in `SHA256SUMS.txt`, and bundled third-party components are documented in `THIRD_PARTY.md`.
+The bundle already contains HCP and all required dependencies in the standard `mods\<current-client-version>\` structure. Advanced users can also download the [standalone HCP file](releases/0.8.14/com.rcooler.hangar_carousel_plus_0.8.14.wotmod?raw=1). Checksums are stored in `SHA256SUMS.txt`, and bundled third-party components are documented in `THIRD_PARTY.md`.
 
 ## Requirements
 
-- World of Tanks Wargaming client 2.3.1.x;
+- World of Tanks Wargaming client 2.4.0.0;
 - `net.openwg.gameface` 1.1.6 or newer and ModsSettingsAPI, both included in the complete bundle.
 
 ## Configuration

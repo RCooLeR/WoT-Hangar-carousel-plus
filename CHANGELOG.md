@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.8.14 - 2026-09-02
+
+- Add checksum-verified compatibility with the Wargaming EU 2.4.0.0 standard hangar, vehicle tooltip, Comp7, Comp7 Light, Frontline, Fun Random, and Last Stand bundles.
+- Guard the private Python client interfaces used by filters, statistics, tooltips, playlists, and Battle Pass sorting with bytecode contract checks.
+- Handle the native 2.4 carousel provider's uninitialized `None` row count so manual and automatic one-through-four-row changes reach the native provider.
+- Add regression and native-bundle tests for row changes, sorting, DOM anchors, and all supported event hangars.
+- Publish a complete standard-layout ZIP with the standalone mod and all three checksum-pinned runtime dependencies.
+
 ## 0.8.13 - 2026-08-21
 
 - Stabilize automatic carousel rows while the standard and event hangars rebuild their vehicle models.

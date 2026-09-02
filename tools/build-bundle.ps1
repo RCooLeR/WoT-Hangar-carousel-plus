@@ -4,7 +4,9 @@ param(
     [string]$GameRoot,
     [Parameter(Mandatory = $true)]
     [string]$PackagePath,
-    [string]$DependencyRoot
+    [string]$DependencyRoot,
+    [string]$BuildDirectory,
+    [string]$OutputDirectory
 )
 
 $ErrorActionPreference = 'Stop'
@@ -20,8 +22,6 @@ if (-not (Test-Path -LiteralPath $PackagePath)) {
     throw "HCP package not found: $PackagePath"
 }
 
-[xml]$meta = Get-Content -LiteralPath (Join-Path $repo 'meta.xml') -Raw
-$modVersion = [string]$meta.DocumentElement.version
 [xml]$versionData = Get-Content -LiteralPath (Join-Path $GameRoot 'version.xml') -Raw
 $clientVersionMatch = [regex]::Match([string]$versionData.DocumentElement.version, '\d+\.\d+\.\d+\.\d+')
 if (-not $clientVersionMatch.Success) {
@@ -58,9 +58,25 @@ function Read-WotmodMetadata([string]$Path) {
     }
 }
 
-$stage = Join-Path $repo "build\bundle-$modVersion"
+[xml]$meta = Read-WotmodMetadata $PackagePath
+$modVersion = [string]$meta.DocumentElement.version
+if ($modVersion -notmatch '^\d+\.\d+\.\d+(?:-rc\.\d+)?$') {
+    throw 'Invalid HCP package version.'
+}
+if (-not $BuildDirectory) { $BuildDirectory = Join-Path $repo 'build' }
+$BuildDirectory = [IO.Path]::GetFullPath($BuildDirectory)
+$stage = Join-Path $BuildDirectory "bundle-$modVersion"
+if (-not $stage.StartsWith((Join-Path $repo 'build') + '\', [StringComparison]::OrdinalIgnoreCase)) {
+    throw 'Bundle staging must remain inside the repository build directory.'
+}
 $modsDir = Join-Path $stage "mods\$clientVersion"
-$dist = Join-Path $repo 'dist'
+$dist = if ($OutputDirectory) { [IO.Path]::GetFullPath($OutputDirectory) } else { Split-Path -Parent $PackagePath }
+if ($modVersion.Contains('-rc.') -and (
+        $dist -eq (Join-Path $repo 'dist') -or
+        $dist -eq (Join-Path $repo 'releases') -or
+        $dist.StartsWith((Join-Path $repo 'releases') + '\', [StringComparison]::OrdinalIgnoreCase))) {
+    throw 'Preview bundles must not overwrite stable dist or release directories.'
+}
 $bundleName = "Hangar_Carousel_Plus_${modVersion}_complete.zip"
 $bundlePath = Join-Path $dist $bundleName
 $checksumsPath = Join-Path $dist 'SHA256SUMS.txt'

@@ -18,12 +18,14 @@ $ErrorActionPreference = 'Stop'
 $GameRoot = [IO.Path]::GetFullPath($GameRoot)
 $BundleOutputPath = [IO.Path]::GetFullPath($BundleOutputPath)
 $CssOutputPath = [IO.Path]::GetFullPath($CssOutputPath)
+. (Join-Path $PSScriptRoot 'client-profile.ps1')
+$profile = Get-HcpClientProfile -GameRoot $GameRoot
 $bundlePackagePath = Join-Path $GameRoot 'res\packages\gui-part4.pkg'
 $cssPackagePath = Join-Path $GameRoot 'res\packages\gui-part2.pkg'
 $bundleEntryPath = 'gui/gameface/_dist/production/mono/hangar/views/vehicle_tooltip/vehicle_tooltip.html/bundle.js'
 $cssEntryPath = 'gui/gameface/_dist/production/mono/hangar/vehicle_tooltip/vehicle_tooltip.css'
-$expectedBundleHash = 'B1CBC96E18174947F5CC83E46A5511924DA9D7AEF139DFA8CB75AA79B366DA4E'
-$expectedCssHash = '4D9D45F739F642F5CCD443386722045F319EC873352B159B36BAEA210249D822'
+$expectedBundleHash = $profile.Hashes.tooltip
+$expectedCssHash = $profile.Hashes.tooltipCss
 
 Add-Type -AssemblyName System.IO.Compression
 Add-Type -AssemblyName System.IO.Compression.FileSystem

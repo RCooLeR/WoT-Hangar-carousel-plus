@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <root>
     <id>com.rcooler.hangar_carousel_plus</id>
-    <version>0.8.13</version>
+    <version>0.8.14</version>
     <name>Hangar Carousel Plus</name>
     <description>Smart vehicle filters and local statistics for the World of Tanks 2.x hangar carousel.</description>
 </root>
