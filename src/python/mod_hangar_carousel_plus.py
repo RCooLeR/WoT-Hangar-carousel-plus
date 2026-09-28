@@ -11,6 +11,7 @@ import io
 import json
 import logging
 import os
+import random
 import time
 import weakref
 
@@ -34,7 +35,7 @@ from skeletons.gui.shared import IItemsCache
 
 
 MOD_ID = 'hangar_carousel_plus'
-MOD_VERSION = '0.8.15'
+MOD_VERSION = '0.8.16'
 PLAYLIST_ID_PREFIX = 'rcooler_hcp_'
 CONFIG_PATH = os.path.join('mods', 'configs', 'RCooLeR', 'hangar_carousel_plus.json')
 RUNTIME_PATH = os.path.join('mods', 'configs', 'RCooLeR', 'hangar_carousel_plus.runtime.json')
@@ -49,7 +50,7 @@ TOOLTIP_CSS_URL = 'coui://gui/gameface/mods/rcooler/hangar_carousel_plus/hangar_
 LOGGER = logging.getLogger('HangarCarouselPlus')
 
 DEFAULT_CONFIG = {
-    'schemaVersion': 6,
+    'schemaVersion': 7,
     'enabled': True,
     'filters': {
         'enabled': [
@@ -68,7 +69,7 @@ DEFAULT_CONFIG = {
         'enabled': True,
         'options': [
             'default', 'battles', 'winRate', 'averageDamage', 'marksOnGun',
-            'battlePassPoints', 'lastPlayed', 'priority'
+            'battlePassPoints', 'lastPlayed', 'priority', 'random'
         ],
         'default': 'default',
         'descending': True
@@ -88,7 +89,7 @@ FILTER_ORDER = (
 )
 SORT_ORDER = (
     'default', 'battles', 'winRate', 'averageDamage', 'marksOnGun',
-    'battlePassPoints', 'lastPlayed', 'priority'
+    'battlePassPoints', 'lastPlayed', 'priority', 'random'
 )
 RUNTIME_DEFAULT = {
     'lastPlayed': {},
@@ -121,6 +122,8 @@ SETTINGS_REGISTERED = False
 VEHICLE_DATA_CACHE = {}
 STATE_JSON_CACHE = None
 SORT_JSON_CACHE = None
+RANDOM_SORT_ORDER = []
+BATTLE_RETURN_PENDING = False
 MODEL_REFRESH_PENDING = False
 BATTLE_PASS_EVENTS_REGISTERED = False
 AUTO_ROWS_REQUEST_SERIAL = 0
@@ -176,7 +179,13 @@ def _migrate_config(loaded):
             insert_at = options.index('lastPlayed') if 'lastPlayed' in options else len(options)
             options.insert(insert_at, 'battlePassPoints')
         sorting['options'] = options
-    loaded['schemaVersion'] = 6
+    if int(loaded.get('schemaVersion', 6)) < 7:
+        sorting = loaded.setdefault('sorting', {})
+        options = list(sorting.get('options', DEFAULT_CONFIG['sorting']['options']))
+        if 'random' not in options:
+            options.append('random')
+        sorting['options'] = options
+    loaded['schemaVersion'] = 7
     return loaded
 
 
@@ -727,6 +736,24 @@ def _sort_descending():
         'sortDescending', CONFIG.get('sorting', {}).get('descending', True)))
 
 
+def _reshuffle_random_order():
+    previous = list(RANDOM_SORT_ORDER)
+    random.shuffle(RANDOM_SORT_ORDER)
+    if len(previous) > 1 and RANDOM_SORT_ORDER == previous:
+        RANDOM_SORT_ORDER.append(RANDOM_SORT_ORDER.pop(0))
+
+
+def _random_sort_values(vehicles):
+    # Retain relative order through refreshes and inventory changes. New tanks
+    # enter at random positions; Random clicks and battle returns reshuffle.
+    RANDOM_SORT_ORDER[:] = [int_cd for int_cd in RANDOM_SORT_ORDER if int_cd in vehicles]
+    known = set(RANDOM_SORT_ORDER)
+    for int_cd in sorted(vehicles):
+        if int_cd not in known:
+            RANDOM_SORT_ORDER.insert(random.randrange(len(RANDOM_SORT_ORDER) + 1), int_cd)
+    return dict((str(int_cd), rank) for rank, int_cd in enumerate(RANDOM_SORT_ORDER))
+
+
 def _build_sort_json():
     global SORT_JSON_CACHE
     if SORT_JSON_CACHE is not None:
@@ -735,7 +762,7 @@ def _build_sort_json():
     mode = _sort_mode()
     payload = {
         'mode': mode,
-        'descending': False if mode == 'priority' else _sort_descending(),
+        'descending': False if mode in ('priority', 'random') else _sort_descending(),
         'values': {}
     }
     if mode == 'default' or not CONFIG.get('sorting', {}).get('enabled', True):
@@ -743,7 +770,9 @@ def _build_sort_json():
         return SORT_JSON_CACHE
 
     vehicles = _inventory_vehicles()
-    if mode == 'lastPlayed':
+    if mode == 'random':
+        payload['values'] = _random_sort_values(vehicles)
+    elif mode == 'lastPlayed':
         last_played = RUNTIME_STATE.get('lastPlayed', {})
         payload['values'] = dict((str(int_cd), long(last_played.get(str(int_cd), 0)))
                                  for int_cd in vehicles)
@@ -773,6 +802,8 @@ def _set_sorting(mode, descending=None):
     if mode not in SORT_ORDER:
         mode = 'default'
     RUNTIME_STATE['sortMode'] = mode
+    if mode == 'random':
+        _reshuffle_random_order()
     if descending is not None:
         RUNTIME_STATE['sortDescending'] = bool(descending)
     _save_runtime()
@@ -835,6 +866,28 @@ def _remove_legacy_playlists():
     LEGACY_PLAYLISTS_REMOVED = True
     if legacy_ids:
         LOGGER.info('Removed %d legacy HCP dynamic playlists', len(legacy_ids))
+
+
+def _on_battle_ready():
+    global BATTLE_RETURN_PENDING
+    if getattr(BattleReplay.g_replayCtrl, 'isPlaying', False):
+        return
+    BATTLE_RETURN_PENDING = True
+    _track_last_played()
+
+
+def _on_account_become_player(*_args, **_kwargs):
+    global BATTLE_RETURN_PENDING
+    if not BATTLE_RETURN_PENDING:
+        return
+    BATTLE_RETURN_PENDING = False
+    if (_sort_mode() == 'random' and CONFIG.get('enabled', True) and
+            CONFIG.get('sorting', {}).get('enabled', True)):
+        _reshuffle_random_order()
+        _invalidate_render_cache()
+        # New providers read the invalidated payload when loading. Refresh any
+        # retained models through the existing deferred coordinator as well.
+        _schedule_models_refresh()
 
 
 def _track_last_played():
@@ -921,7 +974,7 @@ def _build_payload():
                         if key in CONFIG.get('sorting', {}).get('options', SORT_ORDER)],
             'mode': _sort_mode(),
             'descending': _sort_descending(),
-            'directional': _sort_mode() != 'priority'
+            'directional': _sort_mode() not in ('priority', 'random')
         },
         'actionCards': CONFIG.get('actionCards', {}),
         'nativeFeatures': ['premium', 'elite', 'rented', 'daily_bonus', 'battle_pass_available'],
@@ -1447,6 +1500,34 @@ def _settings_filter_enabled(filter_id):
     return filter_id in CONFIG.get('filters', {}).get('enabled', [])
 
 
+SETTINGS_RANDOM_SORT_OPTIONS = {
+    'en': u"Random order",
+    'ru': u"Случайный порядок",
+    'uk': u"Випадковий порядок",
+    'bg': u"Случаен ред",
+    'cs': u"Náhodné pořadí",
+    'da': u"Tilfældig rækkefølge",
+    'de': u"Zufällige Reihenfolge",
+    'el': u"Τυχαία σειρά",
+    'es': u"Orden aleatorio",
+    'fi': u"Satunnainen järjestys",
+    'fr': u"Ordre aléatoire",
+    'hr': u"Nasumični redoslijed",
+    'hu': u"Véletlen sorrend",
+    'it': u"Ordine casuale",
+    'lt': u"Atsitiktinė tvarka",
+    'lv': u"Nejauša secība",
+    'nl': u"Willekeurige volgorde",
+    'no': u"Tilfeldig rekkefølge",
+    'pl': u"Losowa kolejność",
+    'pt': u"Ordem aleatória",
+    'ro': u"Ordine aleatorie",
+    'sr': u"Nasumični redosled",
+    'sv': u"Slumpmässig ordning",
+    'tr': u"Rastgele sıralama",
+}
+
+
 def _register_settings():
     global SETTINGS_REGISTERED
     if SETTINGS_REGISTERED:
@@ -1471,6 +1552,7 @@ def _register_settings():
             sort_options.insert(5, SETTINGS_BATTLE_PASS_SORT_OPTIONS.get(
                 language, u'Battle Pass points'))
             sort_options.append(SETTINGS_PRIORITY_SORT_OPTIONS.get(language, sort_options[-1]))
+        sort_options.append(SETTINGS_RANDOM_SORT_OPTIONS.get(language, u'Random order'))
         rows_value = 0 if _carousel_auto() else (_carousel_rows() or 2)
         column1 = [templates.createLabel(text['filters'], text['native'])]
         for filter_id in FILTER_ORDER:
@@ -1571,7 +1653,8 @@ if CONFIG.get('enabled', True):
         _patch_vehicle_statistics_presenter()
         _patch_legacy_playlist_cleanup()
         _register_battle_pass_events()
-        g_playerEvents.onAvatarReady += _track_last_played
+        g_playerEvents.onAvatarReady += _on_battle_ready
+        g_playerEvents.onAccountBecomePlayer += _on_account_become_player
         LOGGER.info('Hangar Carousel Plus %s loaded', MOD_VERSION)
     except Exception:
         LOGGER.exception('Hangar Carousel Plus failed to initialize')

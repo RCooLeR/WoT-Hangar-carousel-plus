@@ -101,6 +101,8 @@ if (-not $pythonText.Contains('AUTO_ROWS_DEBOUNCE_SECONDS') -or
 if ($LASTEXITCODE -ne 0) {
     throw 'Automatic carousel-row behavioral tests failed.'
 }
+& $Python27 (Join-Path $repo 'tests\test_sorting.py') $pythonSource
+if ($LASTEXITCODE -ne 0) { throw 'Carousel sorting behavioral tests failed.' }
 if ($PreviewVersion) {
     $pythonText = $pythonText.Replace("MOD_VERSION = '$sourceVersion'", "MOD_VERSION = '$version'")
 }

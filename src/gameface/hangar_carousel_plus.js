@@ -31,6 +31,8 @@ const LABELS = {
     sort_battlePassPoints: "Battle Pass points earned",
     sort_lastPlayed: "Last played (HCP)",
     sort_priority: "Primary > Field Modification > default",
+    sort_random: "Random order",
+    sort_random_description: "Click to shuffle the tanks. Click again for a new order.",
     smart_filters: "HCP smart filters",
     sorting: "HCP sorting",
     toggle_on: "ON",
@@ -79,6 +81,8 @@ const LABELS = {
     sort_battlePassPoints: "Очки Боевого пропуска",
     sort_lastPlayed: "Последний бой (HCP)",
     sort_priority: "Основные > полевая модернизация > обычный порядок",
+    sort_random: "Случайный порядок",
+    sort_random_description: "Нажмите, чтобы перемешать танки. Нажмите ещё раз для нового порядка.",
     smart_filters: "Умные фильтры HCP",
     sorting: "Сортировка HCP",
     toggle_on: "ВКЛ",
@@ -127,6 +131,8 @@ const LABELS = {
     sort_battlePassPoints: "Очки Бойової перепустки",
     sort_lastPlayed: "Останній бій (HCP)",
     sort_priority: "Основні > польова модернізація > звичайний порядок",
+    sort_random: "Випадковий порядок",
+    sort_random_description: "Натисніть, щоб перемішати танки. Натисніть ще раз для нового порядку.",
     smart_filters: "Розумні фільтри HCP",
     sorting: "Сортування HCP",
     toggle_on: "УВІМК",
@@ -174,6 +180,7 @@ const FILTER_ICONS = {
 };
 
 const SORT_ICONS = {
+  random: '<svg class="hcp-native-sort-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h3c5 0 7 12 12 12h3M17 14l4 4-4 4M3 18h3c2 0 4-3 6-6s4-6 6-6h3M17 2l4 4-4 4"/></svg>',
   default: '<svg class="hcp-native-sort-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4v16M5 7l3-3 3 3M16 20V4M13 17l3 3 3-3"/></svg>',
   battles: '<svg class="hcp-native-sort-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 20h18M4 20v-6h4v6M10 20V9h4v11M16 20V4h4v16"/></svg>',
   winRate: '<svg class="hcp-native-sort-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="m4 18 5-5 4 3 7-9M15 7h5v5"/></svg>',
@@ -550,7 +557,7 @@ function renderNativeFilterPanel() {
       const title = labels()[`sort_${mode}`] || mode;
       button.setAttribute("aria-label", title);
       button.title = title;
-      bindTooltip(button, title, mode === state.sorting.mode
+      bindTooltip(button, title, mode === 'random' ? labels().sort_random_description : mode === state.sorting.mode && state.sorting.directional !== false
         ? (state.sorting.descending ? labels().descending : labels().ascending)
         : "");
       button.addEventListener("click", (event) => {

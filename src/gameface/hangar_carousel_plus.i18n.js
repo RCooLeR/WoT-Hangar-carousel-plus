@@ -908,3 +908,96 @@ const HCP_PRIORITY_SORT_I18N = {
 for (const [language, value] of Object.entries(HCP_PRIORITY_SORT_I18N)) {
   Object.assign(window.HCP_I18N[language], { sort_priority: value });
 }
+
+const HCP_RANDOM_SORT_I18N = {
+  "bg": [
+    "Случаен ред",
+    "Натиснете отново за ново разбъркване."
+  ],
+  "cs": [
+    "Náhodné pořadí",
+    "Klikněte znovu pro nové zamíchání."
+  ],
+  "da": [
+    "Tilfældig rækkefølge",
+    "Klik igen for at blande på ny."
+  ],
+  "de": [
+    "Zufällige Reihenfolge",
+    "Erneut klicken, um neu zu mischen."
+  ],
+  "el": [
+    "Τυχαία σειρά",
+    "Πατήστε ξανά για νέο ανακάτεμα."
+  ],
+  "es": [
+    "Orden aleatorio",
+    "Haz clic de nuevo para volver a mezclar."
+  ],
+  "fi": [
+    "Satunnainen järjestys",
+    "Sekoita uudelleen napsauttamalla."
+  ],
+  "fr": [
+    "Ordre aléatoire",
+    "Cliquez à nouveau pour mélanger."
+  ],
+  "hr": [
+    "Nasumični redoslijed",
+    "Kliknite ponovno za novo miješanje."
+  ],
+  "hu": [
+    "Véletlen sorrend",
+    "Kattints újra az újrakeveréshez."
+  ],
+  "it": [
+    "Ordine casuale",
+    "Fai clic di nuovo per rimescolare."
+  ],
+  "lt": [
+    "Atsitiktinė tvarka",
+    "Spustelėkite dar kartą, kad išmaišytumėte iš naujo."
+  ],
+  "lv": [
+    "Nejauša secība",
+    "Noklikšķiniet vēlreiz, lai sajauktu no jauna."
+  ],
+  "nl": [
+    "Willekeurige volgorde",
+    "Klik opnieuw om opnieuw te schudden."
+  ],
+  "no": [
+    "Tilfeldig rekkefølge",
+    "Klikk igjen for å blande på nytt."
+  ],
+  "pl": [
+    "Losowa kolejność",
+    "Kliknij ponownie, aby jeszcze raz przetasować."
+  ],
+  "pt": [
+    "Ordem aleatória",
+    "Clique novamente para voltar a baralhar."
+  ],
+  "ro": [
+    "Ordine aleatorie",
+    "Apasă din nou pentru a reamesteca."
+  ],
+  "sr": [
+    "Nasumični redosled",
+    "Kliknite ponovo za novo mešanje."
+  ],
+  "sv": [
+    "Slumpmässig ordning",
+    "Klicka igen för att blanda på nytt."
+  ],
+  "tr": [
+    "Rastgele sıralama",
+    "Yeniden karıştırmak için tekrar tıklayın."
+  ]
+};
+
+for (const [language, values] of Object.entries(HCP_RANDOM_SORT_I18N)) {
+  Object.assign(window.HCP_I18N[language], {
+    sort_random: values[0], sort_random_description: values[1]
+  });
+}

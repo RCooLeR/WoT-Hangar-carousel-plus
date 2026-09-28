@@ -56,6 +56,11 @@ for (const relative of bundles) {
     /\.sort\(\(e,t\)=>\{(?<body>const a=Number\(hcp.values\[e.id\]\?\?0\),s=Number\(hcp.values\[t.id\]\?\?0\);return a===s\?0:\(hcp.descending\?-1:1\)\*\(a-s\))\}/g,
     `${relative} comparator`);
   const compare = new Function("hcp", "e", "t", sort.body);
+  const randomOrder = { mode: "random", descending: false, values: { 1: 2, 2: 0, 3: 3, 4: 1 } };
+  assert.deepStrictEqual([1, 2, 3, 4].map(id => ({ id }))
+    .sort((a, b) => compare(randomOrder, a, b)).map(v => v.id), [2, 4, 1, 3]);
+  assert.deepStrictEqual([1, 3, 4].map(id => ({ id }))
+    .sort((a, b) => compare(randomOrder, a, b)).map(v => v.id), [4, 1, 3]);
   const records = [{ id: 1 }, { id: 2 }, { id: 3 }, { id: 4 }];
   for (const [descending, expected] of [[false, [2, 4, 1, 3]], [true, [3, 1, 2, 4]]]) {
     const hcp = { values: { 1: 20, 2: 0, 3: 30, 4: 0 }, descending };

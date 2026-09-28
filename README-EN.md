@@ -21,14 +21,14 @@ No account credentials or statistics are sent to an external service.
 
 ## Download and install
 
-[Download the complete Hangar Carousel Plus 0.8.15 bundle](releases/0.8.15/Hangar_Carousel_Plus_0.8.15_complete.zip?raw=1)
+[Download the complete Hangar Carousel Plus 0.8.16 bundle](releases/0.8.16/Hangar_Carousel_Plus_0.8.16_complete.zip?raw=1)
 
 1. Close World of Tanks.
 2. Remove older `com.rcooler.hangar_carousel_plus_*.wotmod` files from `<game>\mods\<current-client-version>\`.
 3. Extract the ZIP directly into the World of Tanks root and allow it to merge the `mods` directory.
 4. Start the game.
 
-The bundle already contains HCP and all required dependencies in the standard `mods\<current-client-version>\` structure. Advanced users can also download the [standalone HCP file](releases/0.8.15/com.rcooler.hangar_carousel_plus_0.8.15.wotmod?raw=1). Checksums are stored in `SHA256SUMS.txt`, and bundled third-party components are documented in `THIRD_PARTY.md`.
+The bundle already contains HCP and all required dependencies in the standard `mods\<current-client-version>\` structure. Advanced users can also download the [standalone HCP file](releases/0.8.16/com.rcooler.hangar_carousel_plus_0.8.16.wotmod?raw=1). Checksums are stored in `SHA256SUMS.txt`, and bundled third-party components are documented in `THIRD_PARTY.md`.
 
 ## Requirements
 
@@ -44,6 +44,8 @@ The active configuration is stored at:
 ```
 
 Use the ModsSettingsAPI page or edit `filters.enabled`, `cardStats`, `sorting`, and `actionCards`.
+
+The Random order sorting button shuffles the carousel; click it again to reshuffle. Filtering and normal refreshes retain the relative order. Newly acquired tanks enter at random positions. Returning from each battle reshuffles automatically while Random order is selected, and random sorting has no ascending/descending toggle. Configuration migration adds `random` to the available sorting options while preserving your other settings.
 
 Sorting direction, last-played timestamps, and carousel row mode are stored in `hangar_carousel_plus.runtime.json` beside the configuration. The old files under `res_mods\configs\hangar_carousel_plus` are migrated automatically on first launch.
 

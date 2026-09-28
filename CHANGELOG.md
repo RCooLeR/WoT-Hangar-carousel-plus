@@ -1,3 +1,11 @@
+# 0.8.16 — 2026-09-28
+
+- Add Random order sorting to the carousel and settings menu in all 24 supported languages (issue #4).
+- Reshuffle automatically on returning from each battle when Random order is selected; clicking Random also reshuffles.
+- Keep the order stable through filtering and routine refreshes. Avoid repeating the same complete order when at least two tanks are available.
+- Preserve custom configuration and add the new option through schema migration.
+- Add sorting, battle-return lifecycle, localization, and migration regression tests.
+
 # 0.8.15 — 2026-09-18
 
 - Rebuilt native carousel and tooltip bundles for WoT EU 2.4.0.1 #952.

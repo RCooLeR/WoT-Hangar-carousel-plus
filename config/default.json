@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 6,
+  "schemaVersion": 7,
   "enabled": true,
   "filters": {
     "enabled": [
@@ -36,7 +36,8 @@
       "marksOnGun",
       "battlePassPoints",
       "lastPlayed",
-      "priority"
+      "priority",
+      "random"
     ],
     "default": "default",
     "descending": true
