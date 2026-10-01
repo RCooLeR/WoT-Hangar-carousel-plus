@@ -4,16 +4,16 @@
 
 ## Compatibility boundary
 
-Hangar Carousel Plus currently targets the Wargaming EU 2.4.0.1 client. Its Python APIs, generated models, DOM hooks, and version-locked native Gameface bundle substitutions are private game interfaces. Rebuild and test the mod after every World of Tanks update.
+Hangar Carousel Plus currently targets the Wargaming EU 2.4.0.2 client. Its Python APIs, generated models, DOM hooks, and version-locked native Gameface bundle substitutions are private game interfaces. Rebuild and test the mod after every World of Tanks update.
 
 The native carousel and tooltip patches are protected by source checksums and exact replacement counts. The build stops when the installed client resources do not match the supported version. Patched client resources are generated locally; no original Wargaming bundle is committed to this repository.
 
-Reviewed source hashes live in `tools/client-profiles.json`. The 2.3.1.3 profile is retained for reproducibility, while 2.4.0.1 is the current stable release profile. `tools/check-client-api.py` also checks bytecode fingerprints for the exact private models and presenter methods HCP patches, without importing or executing client code.
+Reviewed source hashes live in `tools/client-profiles.json`. Older profiles are retained for reproducibility, while 2.4.0.2 is the current stable release profile. `tools/check-client-api.py` also checks bytecode fingerprints for the exact private models and presenter methods HCP patches, without importing or executing client code.
 
 ## Prerequisites
 
 - Windows PowerShell 5.1 or PowerShell 7;
-- a local World of Tanks Wargaming EU 2.4.0.1 installation;
+- a local World of Tanks Wargaming EU 2.4.0.2 installation;
 - enough network access for the first build to download the official Python 2.7.18 MSI.
 
 When `-Python27` is not supplied, `tools/bootstrap-python27.ps1` verifies and extracts the official MSI into the local `.tools/` directory. It does not install Python system-wide.
@@ -35,8 +35,8 @@ The default game root is declared in `tools/build.ps1`. Override it for another 
 The package is written to:
 
 ```text
-dist\com.rcooler.hangar_carousel_plus_0.8.15.wotmod
-dist\Hangar_Carousel_Plus_0.8.15_complete.zip
+dist\com.rcooler.hangar_carousel_plus_0.8.17.wotmod
+dist\Hangar_Carousel_Plus_0.8.17_complete.zip
 ```
 
 Build and install in one step:

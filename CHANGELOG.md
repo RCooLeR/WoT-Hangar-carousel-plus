@@ -4,7 +4,7 @@
 - Review updated native carousel and tooltip resources; all 10 private Python API contracts remain unchanged.
 - Preserve random sorting, battle-return reshuffling, and custom configuration.
 - Upgrade the settings template to version 3 so Mod Menu accepts the Random dropdown; seed all controls from current user configuration and runtime state.
-- Automated validation passed; live hangar and battle verification pending.
+- Automated validation passed; the user confirmed gameplay works. The fresh 2026-10-01 session confirms HCP initialization and Mod Menu registration without HCP warnings or errors.
 
 # 0.8.16 — 2026-09-28
 
