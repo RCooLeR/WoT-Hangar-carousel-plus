@@ -103,6 +103,8 @@ if ($LASTEXITCODE -ne 0) {
 }
 & $Python27 (Join-Path $repo 'tests\test_sorting.py') $pythonSource
 if ($LASTEXITCODE -ne 0) { throw 'Carousel sorting behavioral tests failed.' }
+& $Python27 (Join-Path $repo 'tests\test_settings.py') $pythonSource
+if ($LASTEXITCODE -ne 0) { throw 'Settings template migration tests failed.' }
 if ($PreviewVersion) {
     $pythonText = $pythonText.Replace("MOD_VERSION = '$sourceVersion'", "MOD_VERSION = '$version'")
 }

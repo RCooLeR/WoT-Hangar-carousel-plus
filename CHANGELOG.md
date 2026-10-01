@@ -3,6 +3,7 @@
 - Rebuild for World of Tanks EU 2.4.0.2 #956 (client 2626510, overrides 2629859).
 - Review updated native carousel and tooltip resources; all 10 private Python API contracts remain unchanged.
 - Preserve random sorting, battle-return reshuffling, and custom configuration.
+- Upgrade the settings template to version 3 so Mod Menu accepts the Random dropdown; seed all controls from current user configuration and runtime state.
 - Automated validation passed; live hangar and battle verification pending.
 
 # 0.8.16 — 2026-09-28

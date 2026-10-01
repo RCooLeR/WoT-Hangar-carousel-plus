@@ -1588,7 +1588,10 @@ def _register_settings():
         ]
         template = {
             'modDisplayName': u'Hangar Carousel Plus',
-            'settingsVersion': 2,
+            # Random sorting changes the dropdown structure. A version bump
+            # replaces Mod Menu's cached template; all values above are seeded
+            # from the user's current CONFIG/RUNTIME_STATE, not factory defaults.
+            'settingsVersion': 3,
             'enabled': bool(CONFIG.get('enabled', True)),
             'column1': column1,
             'column2': column2

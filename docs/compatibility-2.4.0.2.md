@@ -8,6 +8,6 @@ Client revision 2626510, overrides 2629859. Reviewed against the previously rele
 - Tooltip: rebuilt aliases and component references; the appended renderer and required DOM anchors remain valid.
 - Fun Random and tooltip CSS are byte-identical to 2.4.0.1.
 - All 10 existing private Python API fingerprints pass without relaxing the contract.
-- All 28 Python tests, six native carousel checks (864 row cases), tooltip checks and package checks pass.
+- All 29 Python tests, six native carousel checks (864 row cases), tooltip checks and package checks pass.
 
-Source hashes are recorded in tools/client-profiles.json. Live gameplay verification remains pending; release prepared as a draft.
+Source hashes are recorded in tools/client-profiles.json. The user confirmed initial gameplay works. Log review identified a settings-template version mismatch, fixed by upgrading to template version 3 while seeding current config/runtime values. The corrected package is installed; a fresh runtime log check remains pending and the release remains a draft.
