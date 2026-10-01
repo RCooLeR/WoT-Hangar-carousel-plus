@@ -11,7 +11,7 @@ $GameRoot = [IO.Path]::GetFullPath($GameRoot)
 $OutputPath = [IO.Path]::GetFullPath($OutputPath)
 . (Join-Path $PSScriptRoot 'client-profile.ps1')
 $profile = Get-HcpClientProfile -GameRoot $GameRoot
-if ($profile.Version -in @('2.4.0.0', '2.4.0.1')) {
+if ($profile.Version -in @('2.4.0.0', '2.4.0.1', '2.4.0.2')) {
     & (Join-Path $PSScriptRoot 'patch-native-event-carousels.ps1') `
         -GameRoot $GameRoot -OutputRoot (Split-Path -Parent $OutputPath) -StandardOutputPath $OutputPath
     return

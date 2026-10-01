@@ -1,3 +1,10 @@
+# 0.8.17 — 2026-10-01
+
+- Rebuild for World of Tanks EU 2.4.0.2 #956 (client 2626510, overrides 2629859).
+- Review updated native carousel and tooltip resources; all 10 private Python API contracts remain unchanged.
+- Preserve random sorting, battle-return reshuffling, and custom configuration.
+- Automated validation passed; live hangar and battle verification pending.
+
 # 0.8.16 — 2026-09-28
 
 - Add Random order sorting to the carousel and settings menu in all 24 supported languages (issue #4).
