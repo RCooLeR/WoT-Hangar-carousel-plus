@@ -11,7 +11,15 @@ const modern = fs.existsSync(path.join(stage, "res/gui/gameface/_dist/production
 const resourcePath = value => modern ? value.replace("views/main/main.html/", "main/").replace("views/vehicle_tooltip/vehicle_tooltip.html/", "vehicle_tooltip/").replace("views/hangar/hangar.html/", "hangar/") : value;
 const standard = "res/gui/gameface/_dist/production/mono/hangar/views/main/main.html/bundle.js";
 const modes = ["comp7_light", "comp7", "frontline", "fun_random", "last_stand"];
-if (modern) modes.push("fort_rush");
+let hasFortRush = modern;
+if (process.argv[3]) {
+  const profiles = JSON.parse(fs.readFileSync(path.join(__dirname, "../tools/client-profiles.json"), "utf8"));
+  const profile = profiles[process.argv[3]];
+  assert(profile, `No reviewed HCP resource profile for client ${process.argv[3]}`);
+  hasFortRush = Boolean(profile.fort_rush);
+}
+if (hasFortRush) modes.push("fort_rush");
+else assert(!fs.existsSync(path.join(stage, "res/fort_rush")), "Unexpected Black Signal resources for this client");
 const bundles = [standard, ...modes.map(mode =>
   `res/${mode}/gui/gameface/_dist/production/mono/lobby/views/hangar/hangar.html/bundle.js`)];
 

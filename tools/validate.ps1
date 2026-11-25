@@ -1,7 +1,8 @@
 [CmdletBinding()]
 param(
     [Parameter(Mandatory = $true)]
-    [string]$PackagePath
+    [string]$PackagePath,
+    [string]$GameRoot
 )
 
 $ErrorActionPreference = 'Stop'
@@ -12,6 +13,15 @@ $zip = [IO.Compression.ZipFile]::OpenRead($PackagePath)
 try {
     . (Join-Path $PSScriptRoot 'client-profile.ps1')
     $resourceVersion = if ($zip.GetEntry('res/gui/gameface/_dist/production/mono/hangar/main/bundle.js')) { '2.4.1.0' } else { '2.4.0.2' }
+    $hasFortRush = $resourceVersion -eq '2.4.1.0'
+    if ($GameRoot) {
+        $clientProfile = Get-HcpClientProfile -GameRoot $GameRoot
+        $resourceVersion = $clientProfile.Version
+        $hasFortRush = [bool]$clientProfile.Hashes.PSObject.Properties['fort_rush']
+        if (-not $hasFortRush -and @($zip.Entries | Where-Object { $_.FullName.StartsWith('res/fort_rush/') }).Count) {
+            throw "Unexpected Black Signal resources for client $resourceVersion."
+        }
+    }
     $eventNativeBundles = @(
         'res/comp7_light/gui/gameface/_dist/production/mono/lobby/views/hangar/hangar.html/bundle.js',
         'res/comp7/gui/gameface/_dist/production/mono/lobby/views/hangar/hangar.html/bundle.js',
@@ -20,7 +30,7 @@ try {
         'res/last_stand/gui/gameface/_dist/production/mono/lobby/views/hangar/hangar.html/bundle.js'
     )
     $eventNativeBundles = @($eventNativeBundles | ForEach-Object { Convert-HcpResourcePath -Path $_ -Version $resourceVersion })
-    if ($resourceVersion -eq '2.4.1.0') {
+    if ($hasFortRush) {
         $eventNativeBundles += 'res/fort_rush/gui/gameface/_dist/production/mono/lobby/hangar/bundle.js'
     }
     $required = @(

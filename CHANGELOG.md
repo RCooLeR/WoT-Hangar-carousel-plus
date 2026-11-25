@@ -1,3 +1,10 @@
+# 0.8.20 — 2026-11-25
+
+- Add compatibility with World of Tanks EU 2.4.2.0 #1000.
+- Rebuild the standard and event carousels and vehicle tooltip against the updated client resources.
+- Select optional event integrations from the client profile; omit the Black Signal lobby removed from this client while retaining it for older profiles.
+- Preserve existing filters, sorting, statistics, row settings and user configuration.
+
 # 0.8.19 — 2026-10-14
 
 - Adapt native carousel and tooltip resource paths to WoT EU 2.4.1.0 #974.

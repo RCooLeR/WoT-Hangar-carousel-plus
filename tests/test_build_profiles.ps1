@@ -49,7 +49,25 @@ try {
     if (Test-Path -LiteralPath (Join-Path $scratch 'patched.js')) {
         throw 'Unreviewed relocated source unexpectedly produced a patched output.'
     }
-    Write-Output 'Passed 6 build-profile safety checks.'
+    [IO.File]::WriteAllText((Join-Path $scratch 'version.xml'), '<root><version>2.4.1.1 #993</version></root>')
+    Expect-Failure { & (Join-Path $repo 'tools/patch-native-carousel.ps1') -GameRoot $scratch -OutputPath (Join-Path $scratch 'patched.js') } 'Unsupported standard hangar bundle'
+    if (Test-Path -LiteralPath (Join-Path $scratch 'patched.js')) {
+        throw 'Unreviewed 2.4.1.1 source unexpectedly produced a patched output.'
+    }
+    Expect-Failure { & (Join-Path $repo 'tools/build.ps1') -GameRoot $scratch } 'prerelease-only'
+    [IO.File]::WriteAllText((Join-Path $scratch 'version.xml'), '<root><version>2.4.2.0 #1000</version></root>')
+    Expect-Failure { & (Join-Path $repo 'tools/patch-native-carousel.ps1') -GameRoot $scratch -OutputPath (Join-Path $scratch 'patched.js') } 'Unsupported standard hangar bundle'
+    if (Test-Path -LiteralPath (Join-Path $scratch 'patched.js')) {
+        throw 'Unreviewed 2.4.2.0 source unexpectedly produced a patched output.'
+    }
+    $packagePath = Join-Path $scratch 'stale-event.wotmod'
+    $zip = [IO.Compression.ZipFile]::Open($packagePath, [IO.Compression.ZipArchiveMode]::Create)
+    try {
+        [void]$zip.CreateEntry('res/fort_rush/gui/gameface/_dist/production/mono/lobby/hangar/bundle.js')
+    }
+    finally { $zip.Dispose() }
+    Expect-Failure { & (Join-Path $repo 'tools/validate.ps1') -PackagePath $packagePath -GameRoot $scratch } 'Unexpected Black Signal resources'
+    Write-Output 'Passed 10 build-profile safety checks.'
 }
 finally {
     $resolved = (Resolve-Path -LiteralPath $scratch).Path

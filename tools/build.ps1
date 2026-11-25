@@ -148,7 +148,7 @@ Copy-Item -LiteralPath (Join-Path $repo 'src\gameface\hangar_carousel_plus.toolt
 
 $node = Get-Command node -ErrorAction SilentlyContinue
 if ($node) {
-    & $node.Source (Join-Path $repo 'tests\test_native_carousels.js') $stage
+    & $node.Source (Join-Path $repo 'tests\test_native_carousels.js') $stage $profile.Version
     if ($LASTEXITCODE -ne 0) { throw 'Native carousel behavioral tests failed.' }
 }
 else {
@@ -161,7 +161,7 @@ if ($LASTEXITCODE -ne 0) {
     throw 'WoT package creation failed.'
 }
 
-& (Join-Path $PSScriptRoot 'validate.ps1') -PackagePath $packagePath
+& (Join-Path $PSScriptRoot 'validate.ps1') -PackagePath $packagePath -GameRoot $GameRoot
 $bundlePath = & (Join-Path $PSScriptRoot 'build-bundle.ps1') `
     -GameRoot $GameRoot `
     -PackagePath $packagePath `
